@@ -2,12 +2,12 @@
 
 #include "tile.hpp"
 #include "tile_shapes.hpp"
-#include <deque>
-#include <vector>
-#include <stdexcept>
-#include <random>
 #include <algorithm>
-
+#include <deque>
+#include <functional>
+#include <random>
+#include <stdexcept>
+#include <vector>
 
 class TileQueue {
   private:
@@ -23,5 +23,5 @@ class TileQueue {
     Tile exchangeTile(int index); // Using int for user interface
 
     // Get constant references to the next n tiles without removing them from the queue.
-    std::vector<std::reference_wrapper<const Tile>> nextTiles(size_t n = 5) const; // Returns constant references without exposing internal structure
+    std::vector<std::reference_wrapper<const Tile>> nextTiles(size_t n = 5) const; // Returns constant references without // exposing internal structure
 };
