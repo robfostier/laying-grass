@@ -3,6 +3,7 @@
 #include <random>
 #include <stdexcept>
 #include <iostream>
+#include <array>
 
 Board::Board(size_t nbPlayers) : size(nbPlayers < 5 ? 20 : 30), grid(nullptr) {
     setup(nbPlayers);
@@ -94,16 +95,68 @@ void Board::display() const {
     }
 }
 
-void Board::placeTile(int x, int y, const Tile &tile, const Player &player) {
+bool Board::canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player) const {
+    const Shape &shape = tile.getShape();
+    const bool isStartingTile = (shape == STARTING_TILE);
+
+    const std::array<std::pair<int,int>,4> directions = {{{-1,0}, {1,0}, {0,-1}, {0,1}}};
+    bool touchesOwnCell = false;
+
+    for (size_t i = 0; i < shape.size(); ++i) {
+        for (size_t j = 0; j < shape[0].size(); ++j) {
+            if (!shape[i][j])
+                continue;
+
+            size_t x = coords.first + i;
+            size_t y = coords.second + j;
+
+            // Make sure tile is within board bounds
+            if (x >= size || y >= size)
+                return false;
+
+            // Make sure overlaping cell is not grass
+            if (grid[x][y].type == GRASS)
+                return false;
+
+            // Checking orthogonal neighbours
+            for (const auto &dir : directions) {
+                int newX = static_cast<int>(x) + dir.first;
+                int newY = static_cast<int>(y) + dir.second;
+
+                if (newX < 0 || newY < 0 || newX >= static_cast<int>(size) || newY >= static_cast<int>(size))
+                    continue;
+
+                const Player *owner = grid[newX][newY].owner;
+
+                if (owner) {
+                    // Return false if touching another player's cell
+                    if (owner != &player)
+                        return false;
+
+                    // Mark that we are touching our territory
+                    if (!isStartingTile)
+                        touchesOwnCell = true;
+                }
+            }
+        }
+    }
+
+    // Can place if it's the starting tile or touches own cell
+    return isStartingTile || touchesOwnCell;
+}
+
+void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player) {
     const Shape &shape = tile.getShape();
 
-    // place tile in location wiithout any validation for testing
     for (size_t i = 0; i < shape.size(); ++i) {
         for (size_t j = 0; j < shape[i].size(); ++j) {
-            if (shape[i][j]) {
-                grid[x + i][y + j].type = GRASS;
-                grid[x + i][y + j].owner = const_cast<Player *>(&player); // Safe cast, player outlives board
-            }
+            // Skip empty parts of the tile
+            if (!shape[i][j])
+                continue;
+
+            Cell &cell = grid[coords.first + i][coords.second + j];
+            cell.type = GRASS;
+            cell.owner = const_cast<Player *>(&player); // Safe cast, player outlives board
         }
     }
 }

@@ -2,9 +2,10 @@
 
 #include "player.hpp"
 #include <iostream>
+#include <utility>
 
 // Clear the terminal and print the game header.
-void clear_terminal();
+void clearTerminal();
 
 // Helper struct to apply color formatting to output streams.
 struct Colorize {
@@ -23,3 +24,6 @@ Overload the << operator to apply color formatting when a Colorize object is
 sent to the stream.
 */
 std::ostream &operator<<(std::ostream &os, const Colorize &c);
+
+// Get coordinate input from the user within specified bounds.
+std::pair<size_t, size_t> getCoordinatesInput(size_t max);

@@ -15,4 +15,7 @@ class Tile {
 
     // Rotate the tile 90 degrees clockwise.
     void rotateClockwise() { rotation = (rotation + 90) % 360; }
+
+    // Print the tile shape to the console.
+    void print() const;
 };

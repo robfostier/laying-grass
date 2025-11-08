@@ -1,10 +1,11 @@
 #include "utils.hpp"
+#include <limits>
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-void clear_terminal(void) {
+void clearTerminal(void) {
 #ifdef _WIN32
     SetConsoleOutputCP(65001); // Set console to UTF-8 on Windows
 #endif
@@ -47,5 +48,32 @@ std::ostream& operator<<(std::ostream& os, const Colorize& c) {
             return os << "\033[38;5;208m";
         default:
             return os;
+    }
+}
+
+std::pair<size_t, size_t> getCoordinatesInput(size_t max) {
+    while (true) {
+        int x, y;
+        std::cout << "Enter coordinates (X Y): ";
+        std::cin >> x >> y;
+
+        if (std::cin.fail()
+            || x < 0 || x >= static_cast<int>(max)
+            || y < 0 || y >= static_cast<int>(max)) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Invalid input. Try again." << std::endl
+                      << std::endl;
+            continue;
+        }
+
+        if (std::cin.peek() != '\n') {
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Extra characters detected. Try again." << std::endl
+                      << std::endl;
+            continue;
+        }
+
+        return {static_cast<size_t>(x), static_cast<size_t>(y)};
     }
 }

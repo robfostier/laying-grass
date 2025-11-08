@@ -2,6 +2,7 @@
 
 #include "player.hpp"
 #include "tile.hpp"
+#include <utility>
 
 /**
 Types of cells on the board.
@@ -37,12 +38,12 @@ class Board {
     void setup(size_t nbPlayers);
 
     size_t getSize() const { return size; };
-    const Cell& getCell(int x, int y) const { return grid[x][y]; }
+    const Cell& getCell(size_t x, size_t y) const { return grid[x][y]; }
 
     void placeBonus(CellType bonusType);
 
-    bool canPlaceTile(int x, int y, const Tile &tile, const Player &player) const;
-    void placeTile(int x, int y, const Tile &tile, const Player &player);
+    bool canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player) const;
+    void placeTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player);
 
     void display() const;
 };

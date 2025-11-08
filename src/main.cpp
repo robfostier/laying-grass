@@ -4,7 +4,7 @@
 #include <limits>
 
 int main(void) {
-    clear_terminal();
+    clearTerminal();
 
     std::cout << "Welcome to The Devil's Plan!" << std::endl;
 

@@ -7,6 +7,13 @@
 using Shape = std::vector<std::vector<uint8_t>>;
 
 /**
+Starting tile shape used at the beginning of the game.
+*/
+inline const Shape STARTING_TILE = {
+    {1}
+};
+
+/**
 96 predefined shapes for tiles, ordered by size (from 2x1 to 7x2).
 Each shape is represented as a 2D vector of unsigned 8-bit integers,
 where 1 indicates the presence of a tile segment and 0 indicates empty space.

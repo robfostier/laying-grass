@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <random>
 #include <stdexcept>
+#include <iostream>
 
 TileQueue::TileQueue(size_t nbPlayers) {
     size_t nbTiles = (nbPlayers * 32 + 1) / 3; // 32 / 3 = 10.67 tiles per player, + 1 for rounding
@@ -51,4 +52,43 @@ std::vector<std::reference_wrapper<const Tile>> TileQueue::nextTiles(size_t n) c
         nextTiles.push_back(std::cref(tiles[i])); // Store constant references
 
     return nextTiles;
+}
+
+void TileQueue::printExchangeQueue(const std::vector<std::reference_wrapper<const Tile>> &tiles) const {
+    if (tiles.empty())
+        return;
+
+    // Determine the maximum height of the tiles to align them properly
+    size_t maxHeight = 0;
+    for (const auto &tile : tiles) {
+        const Shape &shape = tile.get().getShape();
+        if (shape.size() > maxHeight)
+            maxHeight = shape.size();
+    }
+
+    // Print each row of the tiles
+    for (size_t row = 0; row < maxHeight; ++row) {
+        for (const auto &tile : tiles) {
+            const Shape &shape = tile.get().getShape();
+            if (shape.empty())
+                continue;
+
+            size_t tileHeight = shape.size();
+            size_t offset = (maxHeight - tileHeight) / 2;
+
+            if (row < offset || row >= offset + tileHeight) {
+                // Print empty space for rows outside the tile's height
+                for (size_t col = 0; col < shape[0].size(); ++col)
+                    std::cout << "  ";
+            } else {
+                // Print the corresponding row of the tile
+                const auto &tileRow = shape[row - offset];
+                for (uint8_t cell : tileRow)
+                    std::cout << (cell ? "██" : "  ");
+            }
+
+            std::cout << "  "; // Space between tiles
+        }
+        std::cout << std::endl;
+    }
 }

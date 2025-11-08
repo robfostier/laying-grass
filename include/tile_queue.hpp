@@ -21,4 +21,7 @@ class TileQueue {
 
     // Get constant references to the next n tiles without removing them from the queue.
     std::vector<std::reference_wrapper<const Tile>> nextTiles(size_t n = 5) const; // Returns constant references without // exposing internal structure
+
+    // Print the next n tiles in the exchange queue.
+    void printExchangeQueue(const std::vector<std::reference_wrapper<const Tile>> &tiles) const;
 };
