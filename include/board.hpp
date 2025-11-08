@@ -11,6 +11,7 @@ Can be empty, grass, stone, or various bonus types.
 enum CellType {
     EMPTY,
     GRASS,
+    STONE,
     BONUS_EXCHANGE,
     BONUS_STONE,
     BONUS_ROBBERY
@@ -38,12 +39,14 @@ class Board {
     void setup(size_t nbPlayers);
 
     size_t getSize() const { return size; };
-    const Cell& getCell(size_t x, size_t y) const { return grid[x][y]; }
+    const Cell& getCell(std::pair<size_t, size_t> coords) const { return grid[coords.first][coords.second]; }
+
+    void setCell(std::pair<size_t, size_t> coords, CellType type, Player *owner);
 
     void placeBonus(CellType bonusType);
 
     bool canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player) const;
-    void placeTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player);
+    void placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player *player);
 
     void display() const;
 };

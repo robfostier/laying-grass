@@ -77,3 +77,29 @@ std::pair<size_t, size_t> getCoordinatesInput(size_t max) {
         return {static_cast<size_t>(x), static_cast<size_t>(y)};
     }
 }
+
+int getIntegerInputInRange(const std::string &prompt, int min, int max) {
+    while (true) {
+        std::cout << prompt;
+        
+        int x;
+        std::cin >> x;
+
+        if (std::cin.fail() || x < min || x > max) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Invalid input. Try again." << std::endl
+                      << std::endl;
+            continue;
+        }
+
+        if (std::cin.peek() != '\n') {
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Extra characters detected. Try again." << std::endl
+                      << std::endl;
+            continue;
+        }
+
+        return x;
+    }
+}

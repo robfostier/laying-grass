@@ -22,4 +22,7 @@ class Game {
     void playTurn(Player &player);
     void endGame();
     void determineWinner();
+
+    void applyStoneBonus(Player &player);
+    void applyRobberyBonus(Player &player);
 };

@@ -80,6 +80,11 @@ void Board::display() const {
                           << "██"
                           << resetColor;
                 break;
+            case STONE:
+                std::cout << "\033[37m" // Light gray color
+                          << "██"
+                          << resetColor;
+                break;
             case BONUS_EXCHANGE:
                 std::cout << "Ｅ";
                 break;
@@ -114,8 +119,8 @@ bool Board::canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, con
             if (x >= size || y >= size)
                 return false;
 
-            // Make sure overlaping cell is not grass
-            if (grid[x][y].type == GRASS)
+            // Make sure overlaping cell is not grass or stone
+            if (grid[x][y].type == GRASS || grid[x][y].type == STONE)
                 return false;
 
             // Checking orthogonal neighbours
@@ -145,9 +150,10 @@ bool Board::canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, con
     return isStartingTile || touchesOwnCell;
 }
 
-void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player) {
+void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player *player) {
     const Shape &shape = tile.getShape();
 
+    // Place the tile on the board
     for (size_t i = 0; i < shape.size(); ++i) {
         for (size_t j = 0; j < shape[i].size(); ++j) {
             // Skip empty parts of the tile
@@ -156,7 +162,55 @@ void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, const 
 
             Cell &cell = grid[coords.first + i][coords.second + j];
             cell.type = GRASS;
-            cell.owner = const_cast<Player *>(&player); // Safe cast, player outlives board
+            cell.owner = player;
         }
     }
+
+    // Check orthogonal neighbours for bonuses (second loop to make sure tile is fully placed before checking neighbours)
+    const std::array<std::pair<int,int>,4> directions = {{{-1,0}, {1,0}, {0,-1}, {0,1}}};
+    for (size_t i = 0; i < shape.size(); ++i) {
+        for (size_t j = 0; j < shape[i].size(); ++j) {
+            if (!shape[i][j])
+                continue;
+
+            size_t x = coords.first + i;
+            size_t y = coords.second + j;
+
+            for (const auto &dir : directions) {
+                int newX = static_cast<int>(x) + dir.first;
+                int newY = static_cast<int>(y) + dir.second;
+
+                if (newX < 0 || newY < 0 || newX >= static_cast<int>(size) || newY >= static_cast<int>(size))
+                    continue;
+
+                Cell &neighbourCell = grid[newX][newY];
+
+                // Apply bonus effects
+                switch (neighbourCell.type) {
+                    case BONUS_EXCHANGE:
+                        player->addCoupon();
+                        neighbourCell.type = GRASS;
+                        neighbourCell.owner = player;
+                        break;
+                    case BONUS_STONE:
+                        player->addStoneBonus();
+                        neighbourCell.type = GRASS;
+                        neighbourCell.owner = player;
+                        break;
+                    case BONUS_ROBBERY:
+                        player->addRobberyBonus();
+                        neighbourCell.type = GRASS;
+                        neighbourCell.owner = player;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+}
+
+void Board::setCell(std::pair<size_t, size_t> coords, CellType type, Player *owner) {
+    grid[coords.first][coords.second].type = type;
+    grid[coords.first][coords.second].owner = owner;
 }

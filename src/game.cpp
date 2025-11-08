@@ -49,10 +49,11 @@ void Game::playTurn(Player &player) {
             std::cout << "Cannot place starting tile at (" << coords.first << ", " << coords.second << "). Try again." << std::endl;
         }
 
-        board.placeTile(coords, startingTile, player);
+        board.placeTile(coords, startingTile, &player);
         return;
     }
     
+    // --- Display game state ---
     Tile currentTile = tileQueue.drawTile();
 
     std::cout << player.getName() << " - Round " << currentRound << ":" << std::endl
@@ -68,4 +69,105 @@ void Game::playTurn(Player &player) {
     std::cout << std::endl;
 
     board.display();
+
+    // --- Turn logic goes here ---
+    size_t exchangeCoupons = player.getCoupons();
+    std::cout << "1 - Take Tile" << std::endl;
+    std::cout << "2 - Exchange (" << exchangeCoupons << " available)" << std::endl;
+
+    int choiceBuffer = getIntegerInputInRange("> ", 1, 2);
+
+    if (choiceBuffer == 2) {
+        if (exchangeCoupons == 0)
+            std::cout << "No exchange coupon available. Continuing with first tile in queue." << std::endl;
+        else {
+            // EXCHANGE LOGIC GOES HERE
+            // REMOVE STONE OR PICK TILE IN QUEUE
+        }
+    }
+
+    bool ready = false;
+    while(!ready) {
+        std::cout << "1 - Place Tile" << std::endl;
+        std::cout << "2 - Rotate Tile" << std::endl;
+        std::cout << "3 - Flip Tile" << std::endl;
+
+        choiceBuffer = getIntegerInputInRange("> ", 1, 3);
+
+        switch (choiceBuffer) {
+            case 1:
+                ready = true;
+                break;
+            case 2:
+                currentTile.rotateClockwise();
+                break;
+            case 3:
+                // FLIP LOGIC GOES HERE
+                break;
+        }
+    }
+
+    std::pair<size_t, size_t> coords = {0, 0};
+    while (true) {
+        coords = getCoordinatesInput(board.getSize());
+        bool canPlace = board.canPlaceTile(coords, currentTile, player);
+        if (canPlace)
+            break;
+        std::cout << "Cannot place starting tile at (" << coords.first << ", "
+                  << coords.second << "). Try again." << std::endl;
+    }
+
+    board.placeTile(coords, currentTile, &player);
+
+    size_t pendingStone = player.getStoneBonus();
+    while (pendingStone > 0) {
+        std::cout << "You have " << pendingStone << " pending stone bonus to use immediately." << std::endl;
+        applyStoneBonus(player);
+    }
+
+    size_t pendingRobbery = player.getRobberyBonus();
+    while (pendingRobbery > 0) {
+        std::cout << "You have " << pendingRobbery << " pending robbery bonus to use immediately." << std::endl;
+        applyRobberyBonus(player);
+    }
+    
+    return;
+}
+
+void Game::applyStoneBonus(Player &player) {
+    std::pair<size_t, size_t> coords = {0, 0};
+
+    while (true) {
+        coords = getCoordinatesInput(board.getSize());
+
+        if (board.getCell(coords).type == EMPTY)
+            break;
+        else
+            std::cout << "Cannot place stone tile at (" << coords.first
+                      << ", " << coords.second << "). Try again." << std::endl;
+    }
+
+    board.setCell(coords, STONE, nullptr);
+
+    player.useStoneBonus();
+    std::cout << "Stone bonus used successfully at (" << coords.first << " " << coords.second << ")" << std::endl;
+}
+
+void Game::applyRobberyBonus(Player &player) {
+    std::pair<size_t, size_t> coords = {0, 0};
+
+    // while (true) {
+    //     coords = getCoordinatesInput(board.getSize());
+
+    //     if (board.getCell(coords).type == GRASS && board.getCell(coords).owner != &player)
+    //         break;
+    //     else
+    //         std::cout << "Cannot rob tile at (" << coords.first
+    //                   << ", " << coords.second << "). Try again." << std::endl;
+    // }
+
+    // board.setCell(coords, GRASS, &player);
+
+    player.useStoneBonus();
+    std::cout << "Stone bonus used successfully at (" << coords.first << " " << coords.second << ")" << std::endl;
 }

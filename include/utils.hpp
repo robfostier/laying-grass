@@ -3,6 +3,7 @@
 #include "player.hpp"
 #include <iostream>
 #include <utility>
+#include <string>
 
 // Clear the terminal and print the game header.
 void clearTerminal();
@@ -27,3 +28,5 @@ std::ostream &operator<<(std::ostream &os, const Colorize &c);
 
 // Get coordinate input from the user within specified bounds.
 std::pair<size_t, size_t> getCoordinatesInput(size_t max);
+
+int getIntegerInputInRange(const std::string &prompt, int min, int max);
