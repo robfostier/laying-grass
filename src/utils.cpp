@@ -14,7 +14,7 @@ void clearTerminal(void) {
 
     // Header
     std::cout << "+--------------------------------+" << std::endl;
-    std::cout << "| The Devil's Plan - 데블스 플랜 |" << std::endl;
+    std::cout << "|   Laying grass  -  데블스 플랜   |" << std::endl;
     std::cout << "+--------------------------------+" << std::endl << std::endl;
 }
 

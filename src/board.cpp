@@ -70,9 +70,8 @@ void Board::placeBonus(CellType bonusType) {
     grid[x][y].type = bonusType;
 }
 
-bool Board::canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player) const {
+bool Board::canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player, bool bIsStartingTile) const {
     Shape shape = tile.getShape();
-    const bool isStartingTile = (shape == STARTING_TILE);
 
     const std::array<std::pair<int,int>,4> directions = {{{-1,0}, {1,0}, {0,-1}, {0,1}}};
     bool touchesOwnCell = false;
@@ -109,7 +108,7 @@ bool Board::canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, con
                         return false;
 
                     // Mark that we are touching our territory
-                    if (!isStartingTile)
+                    if (!bIsStartingTile)
                         touchesOwnCell = true;
                 }
             }
@@ -117,7 +116,17 @@ bool Board::canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, con
     }
 
     // Can place if it's the starting tile or touches own cell
-    return isStartingTile || touchesOwnCell;
+    return bIsStartingTile || touchesOwnCell;
+}
+
+bool Board::canPlaceTileAnywhere(const Tile &tile, const Player &player) const {
+    for (size_t x = 0; x < size; ++x) {
+        for (size_t y = 0; y < size; ++y) {
+            if (canPlaceTile({x, y}, tile, player, false))
+                return true;
+        }
+    }
+    return false;
 }
 
 void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player *player, bool bStealable) {

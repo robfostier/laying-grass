@@ -61,7 +61,8 @@ class Board {
 
     void placeBonus(CellType bonusType);
 
-    bool canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player) const;
+    bool canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player, bool bIsStartingTile) const;
+    bool canPlaceTileAnywhere(const Tile &tile, const Player &player) const;
     void placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player *player, bool bStealable);
 
     std::optional<Tile> stealTile(std::pair<size_t,size_t> target, Player* newOwner);

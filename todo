@@ -1,8 +1,7 @@
 Changer setup game:
 demander nom et demander couleur
 fix flip
-last tile placement checks (collée au territoire)
-If the player is unable to play the tile, it is discarded and the player skips his/her turn.
+known issues : draw si meme carré et meme grass count pas géré
 
 +-[ Tile Queue ]----------------------------------------------------+
 |-------------------------------------------------------------------|

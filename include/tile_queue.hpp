@@ -16,6 +16,9 @@ class TileQueue {
     // Draw the next tile from the queue.
     Tile drawTile();
 
+    // Put a Tile at the back of the TileQueue
+    void pushBack(const Tile &tile) { tiles.push_back(tile); }
+
     // Draw a tile at a specific index and place every tile before that at the back of the queue.
     Tile exchangeTile(int index); // Using int for user interface
 

@@ -67,7 +67,7 @@ void Game::placingTile(Player &player, Tile &tile, bool bStealable, bool bDispla
     std::pair<size_t, size_t> coords = {0, 0};
     while (true) {
         coords = getCoordinatesInput(board.getSize());
-        bool canPlace = board.canPlaceTile(coords, tile, player);
+        bool canPlace = board.canPlaceTile(coords, tile, player, false);
         if (canPlace)
             break;
         std::cout << "Cannot place starting tile at (" << coords.first << ", "
@@ -125,7 +125,7 @@ void Game::playTurn(Player &player) {
         std::pair<size_t, size_t> coords = {0, 0};
         while (true) {
             coords = getCoordinatesInput(board.getSize());
-            bool canPlace = board.canPlaceTile(coords, startingTile, player);
+            bool canPlace = board.canPlaceTile(coords, startingTile, player, true);
             if (canPlace)
                 break;
             std::cout << "Cannot place starting tile at ("
@@ -178,6 +178,7 @@ void Game::playTurn(Player &player) {
                         std::cout << "Exchange cancelled. Keeping first tile." << std::endl;
                     else {
                         int tileIndex = choiceTileIndex - 1;
+                        tileQueue.pushBack(currentTile);
                         currentTile = tileQueue.exchangeTile(tileIndex);
                         player.useCoupon();
                         bDone = true; // We chose that player can only use one coupon per turn
@@ -235,7 +236,8 @@ void Game::playTurn(Player &player) {
         exchangeCoupons = player.getCoupons();
     }
 
-    placingTile(player, currentTile, true, true);
+    if (board.canPlaceTileAnywhere(currentTile, player))
+        placingTile(player, currentTile, true, true);
 }
 
 void Game::applyStoneBonus(Player &player) {
@@ -316,7 +318,7 @@ void Game::exchangeRemainingCoupons(Player &player) {
         std::pair<size_t, size_t> coords = {0, 0};
         while (true) {
             coords = getCoordinatesInput(board.getSize());
-            bool canPlace = board.canPlaceTile(coords, lastTile, player);
+            bool canPlace = board.canPlaceTile(coords, lastTile, player, false);
             if (canPlace)
                 break;
             std::cout << "Cannot place grass tile at ("
