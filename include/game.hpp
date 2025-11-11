@@ -24,9 +24,10 @@ class Game {
 
     void play();
     void playTurn(Player &player);
-    void endGame();
-    void determineWinner();
 
     void applyStoneBonus(Player &player);
     void applyRobberyBonus(Player &player);
+
+    void exchangeRemainingCoupons(Player &player);
+    const Player& determineWinner() const;
 };

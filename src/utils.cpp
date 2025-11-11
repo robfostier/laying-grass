@@ -51,19 +51,39 @@ std::ostream& operator<<(std::ostream& os, const Colorize& c) {
     }
 }
 
+int letterToIndex(char c) {
+    if (c >= 'A' && c <= 'Z')
+        return c - 'A';           // A–Z → 0–25
+    if (c >= 'a' && c <= 'z')
+        return 26 + (c - 'a');    // a–z → 26–51
+    return -1;
+}
+
 std::pair<size_t, size_t> getCoordinatesInput(size_t max) {
     while (true) {
-        int x, y;
-        std::cout << "Enter coordinates (X Y): ";
-        std::cin >> x >> y;
+        std::string rowInput, colInput;
+        std::cout << "Enter coordinates (row column): ";
+        std::cin >> rowInput >> colInput;
 
-        if (std::cin.fail()
-            || x < 0 || x >= static_cast<int>(max)
-            || y < 0 || y >= static_cast<int>(max)) {
+        if (std::cin.fail() || rowInput.size() != 1 || colInput.size() != 1) {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "Invalid input. Try again." << std::endl
                       << std::endl;
+            continue;
+        }
+
+        int x = letterToIndex(rowInput[0]);
+        int y = letterToIndex(colInput[0]);
+
+        // On letterToIndex failure
+        if (x == -1 || y == -1) {
+            std::cout << "Coordinates must be letters (A–Z or a–d). Try again." << std::endl << std::endl;
+            continue;
+        }
+
+        if (x >= static_cast<int>(max) || y >= static_cast<int>(max)) {
+            std::cout << "Coordinates out of range. Try again." << std::endl << std::endl;
             continue;
         }
 

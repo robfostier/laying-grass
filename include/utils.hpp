@@ -26,6 +26,9 @@ sent to the stream.
 */
 std::ostream &operator<<(std::ostream &os, const Colorize &c);
 
+// Convert A-z to 0-51
+int letterToIndex(char c);
+
 // Get coordinate input from the user within specified bounds.
 std::pair<size_t, size_t> getCoordinatesInput(size_t max);
 

@@ -128,7 +128,7 @@ void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player
 
     const std::array<std::pair<int,int>,4> directions = {{{-1,0}, {1,0}, {0,-1}, {0,1}}};
 
-    // Check orthogonal neighbours for bonuses and print characters
+    // Check orthogonal neighbours for printing characters
     for (size_t i = 0; i < shape.size(); ++i) {
         for (size_t j = 0; j < shape[i].size(); ++j) {
             if (!shape[i][j])
@@ -146,33 +146,9 @@ void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player
 
                 Cell &neighbourCell = grid[newX][newY];
 
-                // Apply bonus effects or fill neighbourChars set
-                switch (neighbourCell.type) {
-                    case GRASS:
-                        if (!neighbourCell.printSymbol.empty())
-                            neighbourSymbols.insert(neighbourCell.printSymbol);
-                        break;
-                    case BONUS_EXCHANGE:
-                        player->addCoupon();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｅ";
-                        break;
-                    case BONUS_STONE:
-                        player->addStoneBonus();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｓ";
-                        break;
-                    case BONUS_ROBBERY:
-                        player->addRobberyBonus();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｒ";
-                        break;
-                    default:
-                        break;
-                }
+                // Fill neighbourChars set
+                if (neighbourCell.type == GRASS && !neighbourCell.printSymbol.empty())
+                    neighbourSymbols.insert(neighbourCell.printSymbol);
             }
         }
     }
@@ -197,6 +173,51 @@ void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player
             cell.type = GRASS;
             cell.owner = player;
             cell.printSymbol = availableSymbol;
+        }
+    }
+
+    // Recheck orthogonal neighbours for bonuses (second loop because needed to override with cells first)
+    for (size_t i = 0; i < shape.size(); ++i) {
+        for (size_t j = 0; j < shape[i].size(); ++j) {
+            if (!shape[i][j])
+                continue;
+
+            size_t x = coords.first + i;
+            size_t y = coords.second + j;
+
+            for (const auto &dir : directions) {
+                int newX = static_cast<int>(x) + dir.first;
+                int newY = static_cast<int>(y) + dir.second;
+
+                if (newX < 0 || newY < 0 || newX >= static_cast<int>(size) || newY >= static_cast<int>(size))
+                    continue;
+
+                Cell &neighbourCell = grid[newX][newY];
+
+                // Apply bonus effects
+                switch (neighbourCell.type) {
+                    case BONUS_EXCHANGE:
+                        player->addCoupon();
+                        neighbourCell.type = GRASS;
+                        neighbourCell.owner = player;
+                        neighbourCell.printSymbol = "Ｅ";
+                        break;
+                    case BONUS_STONE:
+                        player->addStoneBonus();
+                        neighbourCell.type = GRASS;
+                        neighbourCell.owner = player;
+                        neighbourCell.printSymbol = "Ｓ";
+                        break;
+                    case BONUS_ROBBERY:
+                        player->addRobberyBonus();
+                        neighbourCell.type = GRASS;
+                        neighbourCell.owner = player;
+                        neighbourCell.printSymbol = "Ｒ";
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 
@@ -258,7 +279,51 @@ std::optional<Tile> Board::stealTile(std::pair<size_t, size_t> target, Player *n
 
 // Display the board in the terminal.
 void Board::display() const {
+    std::vector<std::string> labels;
+
+    for (size_t i = 0; i < size; ++i) {
+        char32_t ch;
+        if (i < 26)
+            ch = 0xFF21 + i; // "Ａ" to "Ｚ"
+        else
+            ch = 0xFF41 + (i - 26); // "ａ" to "ｚ"
+
+        // Converting UTF-32 to UTF-8
+        std::string utf8;
+        if (ch <= 0x7F)
+            utf8.push_back(ch);
+        else if (ch <= 0x7FF) {
+            utf8.push_back(0xC0 | ((ch >> 6) & 0x1F));
+            utf8.push_back(0x80 | (ch & 0x3F));
+        } else if (ch <= 0xFFFF) {
+            utf8.push_back(0xE0 | ((ch >> 12) & 0x0F));
+            utf8.push_back(0x80 | ((ch >> 6) & 0x3F));
+            utf8.push_back(0x80 | (ch & 0x3F));
+        } else {
+            utf8.push_back(0xF0 | ((ch >> 18) & 0x07));
+            utf8.push_back(0x80 | ((ch >> 12) & 0x3F));
+            utf8.push_back(0x80 | ((ch >> 6) & 0x3F));
+            utf8.push_back(0x80 | (ch & 0x3F));
+        }
+        labels.push_back(utf8);
+    }
+
+    // First row
+    std::cout << "  | ";
+    for (const auto &label : labels)
+        std::cout << label;
+    std::cout << " |  ";
+    std::cout << std::endl;
+
+    // Separator row
+    std::cout << "--|-";
+    for (size_t i = 0; i < size; ++i) 
+        std::cout << "--";
+    std::cout << "-|--";
+    std::cout << std::endl;
+
     for (size_t x = 0; x < size; ++x) {
+        std::cout << labels[x] << "| ";
         for (size_t y = 0; y < size; ++y) {
             const Cell &cell = grid[x][y];
 
@@ -289,6 +354,22 @@ void Board::display() const {
                 break;
             }
         }
+        std::cout << " |" << labels[x];
         std::cout << std::endl;
     }
+
+    // Separator row
+    std::cout << "--|-";
+    for (size_t i = 0; i < size; ++i) 
+        std::cout << "--";
+    std::cout << "-|--";
+    std::cout << std::endl;
+
+    // Last row
+    std::cout << "  | ";
+    for (const auto &label : labels)
+        std::cout << label;
+    std::cout << " |  ";
+
+    std::cout << std::endl << std::endl;
 }

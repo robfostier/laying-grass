@@ -2,6 +2,7 @@
 #include "utils.hpp"
 #include <iostream>
 #include <optional>
+#include <algorithm>
 
 Game::Game(size_t nbPlayers)
     : board(nbPlayers), tileQueue(nbPlayers), nbPlayers(nbPlayers), players(), currentRound(0) {
@@ -92,14 +93,21 @@ void Game::placingTile(Player &player, Tile &tile, bool bStealable, bool bDispla
 }
 
 void Game::play() {
-    // board.placeTile({10, 10}, tileQueue.drawTile(), players[0]); // Initial tile placement for testing
-
     for (currentRound = 0; currentRound <= maxRounds; ++currentRound) {
         for (auto &player : players)
             playTurn(player);
     }
 
-    playTurn(players[0]); // Single turn for testing
+    for (auto &player : players)
+        exchangeRemainingCoupons(player);
+
+    const Player &winner = determineWinner();
+
+    clearTerminal();
+    board.display();
+
+    std::cout << winner.getName() << " wins the game." << std::endl;
+    std::cout << "Thank you for playing !"  << std::endl;
 }
 
 void Game::playTurn(Player &player) {
@@ -291,4 +299,93 @@ void Game::applyRobberyBonus(Player &player) {
               << coords.first << " " << coords.second
               << ")" << std::endl
               << std::endl;
+}
+
+void Game::exchangeRemainingCoupons(Player &player) {
+    size_t coupons = player.getCoupons();
+
+    while (coupons > 0) {
+        clearTerminal();
+        board.display();
+
+        Tile lastTile = Tile(STARTING_TILE);
+
+        std::cout << player.getName() << " - " << coupons << " exchange coupons remaining:" << std::endl
+                  << std::endl;
+
+        std::pair<size_t, size_t> coords = {0, 0};
+        while (true) {
+            coords = getCoordinatesInput(board.getSize());
+            bool canPlace = board.canPlaceTile(coords, lastTile, player);
+            if (canPlace)
+                break;
+            std::cout << "Cannot place grass tile at ("
+                      << coords.first << ", " << coords.second
+                      << "). Try again." << std::endl
+                      << std::endl;
+        }
+
+        board.placeTile(coords, lastTile, &player, false);
+        player.useCoupon();
+        coupons = player.getCoupons();
+    }
+}
+
+const Player& Game::determineWinner() const {
+    if (players.empty())
+        throw std::runtime_error("No player in the game");
+
+    const Player *winner = &players[0];
+    std::pair<size_t, size_t> toBeat = {0, 0}; // Holds largest square number and grass in territory count 
+    for (const Player &player : players) {
+        size_t boardSize = board.getSize();
+
+        if (boardSize == 0)
+            throw std::runtime_error("Invalid board size");
+
+        // Creates a 2D vector table of zeroes. table[x][y] stores the size of the largest square whose bottom right corner is (x, y)
+        std::vector<std::vector<size_t>> table(boardSize, std::vector<size_t>(boardSize, 0));
+
+        size_t largestSquare = 0;
+        size_t bestX = 0;
+        size_t bestY = 0;
+
+        for (size_t x = 0; x < boardSize; ++x) {
+            for (size_t y = 0; y < boardSize; ++y) {
+                const Cell &cell = board.getCell({x, y});
+
+                if (cell.owner == &player) {
+                    if (x == 0 || y == 0)
+                        table[x][y] = 1;
+                    else
+                        table[x][y] = 1 + std::min({table[x - 1][y], table[x][y - 1], table[x - 1][y - 1]});
+
+                    if (table[x][y] > largestSquare){
+                        largestSquare = table[x][y];
+                        bestX = x;
+                        bestY = y;
+                    }
+                }
+            }
+        }
+
+        size_t grassCount = 0;
+        size_t startX = bestX - largestSquare + 1;
+        size_t startY = bestY - largestSquare + 1;
+
+        for (size_t x = startX; x < bestX; ++x) {
+            for (size_t y = startY; y < bestY; ++y) {
+                const Cell &cell = board.getCell({x, y});
+                if (cell.type == GRASS && cell.owner == &player)
+                    grassCount++;
+            }
+        }
+
+        if (largestSquare > toBeat.first || (largestSquare == toBeat.first && grassCount > toBeat.second)) {
+            toBeat = {largestSquare, grassCount};
+            winner = &player;
+        }
+    }
+
+    return *winner;
 }

@@ -1,7 +1,8 @@
 Changer setup game:
 demander nom et demander couleur
-logique de victoire
-final 1x1 tile
+fix flip
+last tile placement checks (collée au territoire)
+If the player is unable to play the tile, it is discarded and the player skips his/her turn.
 
 +-[ Tile Queue ]----------------------------------------------------+
 |-------------------------------------------------------------------|
