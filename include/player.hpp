@@ -14,7 +14,8 @@ class Player {
     size_t robberyBonus;
 
   public:
-    Player(const std::string &name, PlayerColor color);
+    Player(const std::string &name, PlayerColor color)
+        : name(name), color(color), coupons(1), stoneBonus(0), robberyBonus(0) {}
 
     const std::string& getName() const { return name; } // Returns a constant reference to the player's name
     PlayerColor getColor() const { return color; } // Returns the player's color by value
@@ -26,7 +27,7 @@ class Player {
     void addStoneBonus() { ++stoneBonus; }
     void addRobberyBonus() { ++robberyBonus; }
 
-    void useCoupon() { --coupons; }
-    void useStoneBonus() { --stoneBonus; }
-    void useRobberyBonus() { --robberyBonus; }
+    void useCoupon() { if (coupons > 0) --coupons; }
+    void useStoneBonus() { if (stoneBonus > 0) --stoneBonus; }
+    void useRobberyBonus() { if (robberyBonus > 0) --robberyBonus; }
 };

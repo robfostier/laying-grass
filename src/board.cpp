@@ -6,15 +6,16 @@
 #include <array>
 #include <set>
 
-Board::Board(size_t nbPlayers) : size(nbPlayers < 5 ? 20 : 30), grid(nullptr) {
-    setup(nbPlayers);
-}
-
 Board::~Board() {
     for (size_t i = 0; i < size; ++i) {
         delete[] grid[i];
     }
     delete[] grid;
+}
+
+void Board::setCell(std::pair<size_t, size_t> coords, CellType type, Player *owner) {
+    grid[coords.first][coords.second].type = type;
+    grid[coords.first][coords.second].owner = owner;
 }
 
 void Board::setup(size_t nbPlayers) {
@@ -39,11 +40,6 @@ void Board::setup(size_t nbPlayers) {
         placeBonus(BONUS_STONE);
     for (size_t i = 0; i < nbRobbery; ++i)
         placeBonus(BONUS_ROBBERY);
-}
-
-void Board::setCell(std::pair<size_t, size_t> coords, CellType type, Player *owner) {
-    grid[coords.first][coords.second].type = type;
-    grid[coords.first][coords.second].owner = owner;
 }
 
 void Board::placeBonus(CellType bonusType) {
@@ -318,21 +314,20 @@ void Board::display() const {
     }
 
     // First row
-    std::cout << "  | ";
+    std::cout << "     ";
     for (const auto &label : labels)
         std::cout << label;
-    std::cout << " |  ";
     std::cout << std::endl;
 
     // Separator row
-    std::cout << "--|-";
+    std::cout << "   +-";
     for (size_t i = 0; i < size; ++i) 
         std::cout << "--";
-    std::cout << "-|--";
+    std::cout << "-+";
     std::cout << std::endl;
 
     for (size_t x = 0; x < size; ++x) {
-        std::cout << labels[x] << "| ";
+        std::cout << labels[x] << " | ";
         for (size_t y = 0; y < size; ++y) {
             const Cell &cell = grid[x][y];
 
@@ -363,22 +358,21 @@ void Board::display() const {
                 break;
             }
         }
-        std::cout << " |" << labels[x];
+        std::cout << " | " << labels[x];
         std::cout << std::endl;
     }
 
     // Separator row
-    std::cout << "--|-";
+    std::cout << "   +-";
     for (size_t i = 0; i < size; ++i) 
         std::cout << "--";
-    std::cout << "-|--";
+    std::cout << "-+";
     std::cout << std::endl;
 
     // Last row
-    std::cout << "  | ";
+    std::cout << "     ";
     for (const auto &label : labels)
         std::cout << label;
-    std::cout << " |  ";
 
     std::cout << std::endl << std::endl;
 }

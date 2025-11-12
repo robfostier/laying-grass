@@ -125,10 +125,9 @@ void Game::placingTile(Player &player, Tile &tile, bool bStealable, bool bDispla
 }
 
 void Game::play() {
-    for (currentRound = 0; currentRound <= maxRounds; ++currentRound) {
+    for (currentRound = 0; currentRound <= maxRounds; ++currentRound)
         for (auto &player : players)
             playTurn(player);
-    }
 
     for (auto &player : players)
         exchangeRemainingCoupons(player);

@@ -18,12 +18,12 @@ Shape Tile::rotateShape(const Shape &shape) {
 Shape Tile::getShape() const {
     Shape shape = baseShape;
 
+    for (int i = 0; i < rotation / 90; ++i)
+        shape = rotateShape(shape);
+
     if (flipped)
         for (auto &row : shape)
             std::reverse(row.begin(), row.end());
-
-    for (int i = 0; i < rotation / 90; ++i)
-        shape = rotateShape(shape);
 
     return shape;
 }

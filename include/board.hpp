@@ -47,17 +47,16 @@ class Board {
     std::vector<PlacedTile> placedTiles;
 
   public:
-    Board(size_t nbPlayers);
+    Board(size_t nbPlayers) : size(nbPlayers < 5 ? 20 : 30), grid(nullptr) { setup(nbPlayers); }
     ~Board();
-
-    void setup(size_t nbPlayers);
 
     size_t getSize() const { return size; };
     const std::vector<PlacedTile>& getPlacedTiles() const { return placedTiles; }
     Cell& getCell(std::pair<size_t, size_t> coords) { return grid[coords.first][coords.second]; }
     const Cell& getCell(std::pair<size_t, size_t> coords) const { return grid[coords.first][coords.second]; }
-
     void setCell(std::pair<size_t, size_t> coords, CellType type, Player *owner);
+
+    void setup(size_t nbPlayers);
 
     void placeBonus(CellType bonusType);
 
