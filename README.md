@@ -1041,7 +1041,6 @@ void Board::display() const {
         if (i < 26) ch = 0xFF21 + i; // "Ａ" to "Ｚ"
         else ch = 0xFF41 + (i - 26); // "ａ" to "ｚ"
 
-        // Converting UTF-32 to UTF-8
         std::string utf8;
         if (ch <= 0x7F) utf8.push_back(ch);
         else if (ch <= 0x7FF) {
@@ -1060,11 +1059,9 @@ void Board::display() const {
         labels.push_back(utf8);
     }
 
-    // First row
     std::cout << "     ";
     for (const auto &label : labels) std::cout << label;
 
-    // Separator row
     std::cout << std::endl << "   +-";
     for (size_t i = 0; i < size; ++i) std::cout << "--";
     std::cout << "-+" << std::endl;
@@ -1100,12 +1097,10 @@ void Board::display() const {
         std::cout << " | " << labels[x] << std::endl;
     }
 
-    // Separator row
     std::cout << "   +-";
     for (size_t i = 0; i < size; ++i) std::cout << "--";
     std::cout << "-+" << std::endl;
 
-    // Last row
     std::cout << "     ";
     for (const auto &label : labels) std::cout << label;
     std::cout << std::endl << std::endl;
