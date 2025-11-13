@@ -93,7 +93,10 @@ The skipped tiles (before the chosen one) are placed back at the back of the que
 The game lasts nine rounds, meaning each player will place up to nine tiles.
 At the very end, players may spend any remaining tile exchange coupon to buy and place 1x1 grass tiles wherever they wish.
 
-#### Bonus types
+#### Bonus type
+
+When a player surrounds a bonus square on its four sides (N, S, E, W), they claim it and gain a reward.
+The square then becomes part of their territory.
 
 1. Exchange Square :
 +1 tile exchange coupon. 1.5 per player (rounded up).
