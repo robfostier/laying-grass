@@ -348,6 +348,7 @@ class Board {
     bool canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player, bool bIsStartingTile) const;
     bool canPlaceTileAnywhere(const Tile &tile, const Player &player) const;
     void placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player *player, bool bStealable);
+    void checkBonusCapture(Player *player);
     std::optional<Tile> stealTile(std::pair<size_t,size_t> target, Player* newOwner);
     void display() const;
 };
@@ -363,7 +364,7 @@ It also contains a constructor and a destructor :
 - `Board(size_t nbPlayers)` : A `Board` is constructed using the number of players as an argument. It initializes `size` and calls `setup()`.
 - `~Board()` : A `Board` is destroyed by manually freeing the contents of `grid`.
 
-It also contains 12 public methods :
+It also contains 13 public methods :
 - 4 getters, 1 for `size`, 1 for `placedTiles` and 2 for the cells at specific coordinates.
 - `void setCell(std::pair<size_t, size_t> coords, CellType type, Player *owner)` : A setter for cells at specific coordinates.
 - `void setup(size_t nbPlayers)` : A method used by the class constructor that sets up the board for a game, taking the number of players as an argument. It allocates `grid` and places bonuses on the board.
@@ -371,6 +372,7 @@ It also contains 12 public methods :
 - `bool canPlaceTile(std::pair<size_t, size_t> coords, const Tile &tile, const Player &player, bool bIsStartingTile) const` : A constant method that returns a bool indicating whether a player can place a specific tile at specific coordinates.
 - `bool canPlaceTileAnywhere(const Tile &tile, const Player &player) const` : A constant method that returns a bool indicating whether a player can place a specific tile anywhere on the board.
 - `void placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player *player, bool bStealable)` : A method that places a tile on the board.
+- `void checkBonusCapture(Player *player)` : A method that updates bonus cells when captured.
 - `std::optional<Tile> stealTile(std::pair<size_t,size_t> target, Player* newOwner)` : A method that removes a tile from `placedTiles` and returns it. It is used for robbery bonuses logic. It may return `nullopt` on failure.
 - `void display() const` : A method that prints the board in the terminal.
 
@@ -724,7 +726,12 @@ const Player& Game::determineWinner() const {
         for (size_t x = bestX - largestSquare + 1; x < bestX; ++x) {
             for (size_t y = bestY - largestSquare + 1; y < bestY; ++y) {
                 const Cell &cell = board.getCell({x, y});
-                if (cell.type == GRASS && cell.owner == &player) grassCount++;
+                if (cell.type == GRASS
+                    && cell.printSymbol != "Ｅ"
+                    && cell.printSymbol != "Ｓ"
+                    && cell.printSymbol != "Ｒ"
+                    && cell.owner == &player)
+                    grassCount++;
             }
         }
 
@@ -748,7 +755,7 @@ The method computes these scores for each player using the following logic :
 - It then looks at every cell in the board, starting at {0, 0} :
     - If it finds a cell owned by that player, it stores 1 + the minimum value stored in {x - 1, y}, {x, y - 1} and {x - 1, y - 1}. Using that logic, we are able to construct `table`.
     - It a cell beats that player `largestSquare`, it updates it with its value and stores its coordinates in `bestX` and `bestY`.
-- After computing `largestSquare`, it uses `bestX`and `bestY` to go back at these coordinates and look in a `largestSquare` size. For each cell in this area, it increments `grassCount` if that cell's type is `GRASS`.
+- After computing `largestSquare`, it uses `bestX`and `bestY` to go back at these coordinates and look in a `largestSquare` size. For each cell in this area, it increments `grassCount` if that cell's type is `GRASS`, is not a former bonus, and is owned by the player.
 - It then compares `largestSquare` and `grassCount` to `toBeat`. If `largestSquare` beats `toBeat.first` or if it equals it and `grassCount` beats `toBeat.second`, that player has set a new best Score. It updates `toBeat` and store that player as the provisional winner.
 
 Finally, after computing the scores for each player, the method has determined the winner and returns it.
@@ -850,47 +857,7 @@ void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player
         }
     }
 
-    for (size_t i = 0; i < shape.size(); ++i) {
-        for (size_t j = 0; j < shape[i].size(); ++j) {
-            if (!shape[i][j]) continue;
-
-            size_t x = coords.first + i;
-            size_t y = coords.second + j;
-
-            for (const auto &dir : directions) {
-                int newX = static_cast<int>(x) + dir.first;
-                int newY = static_cast<int>(y) + dir.second;
-
-                if (newX < 0 || newY < 0 || newX >= static_cast<int>(size) || newY >= static_cast<int>(size)) continue;
-
-                Cell &neighbourCell = grid[newX][newY];
-
-                switch (neighbourCell.type) {
-                    case BONUS_EXCHANGE:
-                        player->addCoupon();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｅ";
-                        break;
-                    case BONUS_STONE:
-                        player->addStoneBonus();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｓ";
-                        break;
-                    case BONUS_ROBBERY:
-                        player->addRobberyBonus();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｒ";
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-    }
-
+    checkBonusCapture(player);
     placedTiles.push_back({tile, coords, player, bStealable});
 }
 ```
@@ -899,9 +866,64 @@ This method is responsible for placing a tile on the board. It is not responsibl
 - Using the same logic as `Board::canPlaceTile()`, it make a first pass on orthogonal neighbours. It looks for any previously placed `GRASS` cell. If it finds one, it adds its `Cell::printSymbol` to the set `neighboursSymbols`. It keeps track of this information so that no two adjacent tiles use the same printSymbol. That allows the players to distinguish previously placed tiles, for robbery bonuses.
 - It then choses the first symbol in the array `symbols` not in the set `neighboursSymbols` as an availableSymbol.
 - It then places the tile on the board. Logic here is straightforward.
-- It then makes a second pass on orthogonal neighbours. It is now looking for bonuses. It couldn't do this on the first pass, because bonuses overriden by the placed tile must not be credited to the player, so we needed to place the tile before this lookup (and we needed to lookup for symbols before placing the tile).
-Again, it uses the same logic for orthogonal neighbours checks. If it finds either `BONUS_EXCHANGE`, `BONUS_STONE` or `BONUS_ROBBERY`, it changes those cells to `GRASS` and credits the player of a corresponding coupon.
+- It then calls `Board::checkBonusCapture()`, that updates any cell containing a bonus if that cell is now surrounded by 4 `GRASS` tiles belonging to a single player.
 - Finally, it pushes the tile into `Board::placedTiles` to keep a record of it, for robbery bonuses logic.
+
+#### Board::checkBonusCapture()
+
+```c++
+void Board::checkBonusCapture(Player *player) {
+    const std::array<std::pair<int,int>,4> directions = {{{-1,0}, {1,0}, {0,-1}, {0,1}}};
+
+    for (int x = 0; x < static_cast<int>(size); ++x) {
+        for (int y = 0; y < static_cast<int>(size); ++y) {
+            Cell &cell = grid[x][y];
+
+            if (cell.type != BONUS_EXCHANGE && cell.type != BONUS_STONE && cell.type != BONUS_ROBBERY)
+                continue;
+
+            bool surrounded = true;
+            for (const auto &dir : directions) {
+                int newX = x + dir.first;
+                int newY = y + dir.second;
+
+                Cell &neighbour = grid[newX][newY];
+                if (neighbour.owner != player || neighbour.type != GRASS) {
+                    surrounded = false;
+                    break;
+                }
+            }
+
+            if (surrounded) {
+                switch (cell.type) {
+                    case BONUS_EXCHANGE:
+                        player->addCoupon();
+                        cell.printSymbol = "Ｅ";
+                        break;
+                    case BONUS_STONE:
+                        player->addStoneBonus();
+                        cell.printSymbol = "Ｓ";
+                        break;
+                    case BONUS_ROBBERY:
+                        player->addRobberyBonus();
+                        cell.printSymbol = "Ｒ";
+                        break;
+                    default:
+                        break;
+                }
+
+                cell.type = GRASS;
+                cell.owner = player;
+            }
+        }
+    }
+}
+```
+
+This method loops over every cell in the board, looking for any `BONUS_...` cell surrounded by 4 `GRASS` tiles owned by the same player :
+- If the cell is not a bonus cell, it does not look at it further.
+- It then loops over all 4 orthogonal directions. If it finds a cell that is not `GRASS` or that is not owned by `player`, it marks the current bonus cell as not surrounded.
+- If the bonus cell is still marked as surrounded, it found a newly surrounded bonus cell. It then adds the corresponding coupon to the player, and updates the cell's content to replace the bonus by a `GRASS` tile.
 
 #### Board::stealTile()
 

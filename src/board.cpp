@@ -181,52 +181,62 @@ void Board::placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player
         }
     }
 
-    // Recheck orthogonal neighbours for bonuses (second loop because needed to override with cells first)
-    for (size_t i = 0; i < shape.size(); ++i) {
-        for (size_t j = 0; j < shape[i].size(); ++j) {
-            if (!shape[i][j])
+    checkBonusCapture(player);
+    placedTiles.push_back({tile, coords, player, bStealable});
+}
+
+void Board::checkBonusCapture(Player *player) {
+    const std::array<std::pair<int,int>,4> directions = {{{-1,0}, {1,0}, {0,-1}, {0,1}}};
+
+    for (int x = 0; x < static_cast<int>(size); ++x) {
+        for (int y = 0; y < static_cast<int>(size); ++y) {
+            Cell &cell = grid[x][y];
+
+            if (cell.type != BONUS_EXCHANGE &&
+                cell.type != BONUS_STONE &&
+                cell.type != BONUS_ROBBERY)
                 continue;
 
-            size_t x = coords.first + i;
-            size_t y = coords.second + j;
-
+            bool surrounded = true;
             for (const auto &dir : directions) {
-                int newX = static_cast<int>(x) + dir.first;
-                int newY = static_cast<int>(y) + dir.second;
+                int newX = x + dir.first;
+                int newY = y + dir.second;
 
-                if (newX < 0 || newY < 0 || newX >= static_cast<int>(size) || newY >= static_cast<int>(size))
-                    continue;
+                if (newX < 0 || newY < 0 || newX >= static_cast<int>(size) || newY >= static_cast<int>(size)) {
+                    surrounded = false;
+                    break;
+                }
 
-                Cell &neighbourCell = grid[newX][newY];
+                Cell &neighbour = grid[newX][newY];
+                if (neighbour.owner != player || neighbour.type != GRASS) {
+                    surrounded = false;
+                    break;
+                }
+            }
 
-                // Apply bonus effects
-                switch (neighbourCell.type) {
+            if (surrounded) {
+                switch (cell.type) {
                     case BONUS_EXCHANGE:
                         player->addCoupon();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｅ";
+                        cell.printSymbol = "Ｅ";
                         break;
                     case BONUS_STONE:
                         player->addStoneBonus();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｓ";
+                        cell.printSymbol = "Ｓ";
                         break;
                     case BONUS_ROBBERY:
                         player->addRobberyBonus();
-                        neighbourCell.type = GRASS;
-                        neighbourCell.owner = player;
-                        neighbourCell.printSymbol = "Ｒ";
+                        cell.printSymbol = "Ｒ";
                         break;
                     default:
                         break;
                 }
+
+                cell.type = GRASS;
+                cell.owner = player;
             }
         }
     }
-
-    placedTiles.push_back({tile, coords, player, bStealable});
 }
 
 std::optional<Tile> Board::stealTile(std::pair<size_t, size_t> target, Player *newOwner) {

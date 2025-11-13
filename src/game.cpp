@@ -409,7 +409,11 @@ const Player& Game::determineWinner() const {
         for (size_t x = startX; x < bestX; ++x) {
             for (size_t y = startY; y < bestY; ++y) {
                 const Cell &cell = board.getCell({x, y});
-                if (cell.type == GRASS && cell.owner == &player)
+                if (cell.type == GRASS
+                    && cell.printSymbol != "Ｅ"
+                    && cell.printSymbol != "Ｓ"
+                    && cell.printSymbol != "Ｒ"
+                    && cell.owner == &player)
                     grassCount++;
             }
         }

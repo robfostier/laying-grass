@@ -64,6 +64,8 @@ class Board {
     bool canPlaceTileAnywhere(const Tile &tile, const Player &player) const;
     void placeTile(std::pair<size_t, size_t> coords, const Tile &tile, Player *player, bool bStealable);
 
+    void checkBonusCapture(Player *player);
+
     std::optional<Tile> stealTile(std::pair<size_t,size_t> target, Player* newOwner);
 
     void display() const;
